@@ -1,30 +1,23 @@
+import { z } from "zod";
 import { config } from "dotenv";
 
 config();
 
-const requiredEnvVars = {
-  DATABASE_URL: process.env.DATABASE_URL,
-  JWT_SECRET: process.env.JWT_SECRET,
-};
+const envSchema = z.object({
+  PORT: z.string().default("3000").transform(Number),
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  DATABASE_URL: z.string().url(),
+  JWT_SECRET: z.string().min(1),
+  JWT_EXPIRES_IN: z.string().default("7d"),
+  CORS_ALLOWED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:8080").transform((str) => str.split(",").map((s) => s.trim())),
+});
 
-const missingVars = Object.entries(requiredEnvVars)
-  .filter(([_, value]) => !value)
-  .map(([key]) => key);
+const parsedEnv = envSchema.safeParse(process.env);
 
-if (missingVars.length > 0) {
-  console.error("Missing required environment variables:");
-  missingVars.forEach((varName) => {
-    console.error(`   - ${varName}`);
-  });
-  console.error("\n Please create a .env file with the required variables.");
+if (!parsedEnv.success) {
+  console.error("Invalid environment variables:", parsedEnv.error.format());
   process.exit(1);
 }
 
-export const ENV = {
-  PORT: process.env.PORT || 3000,
-  NODE_ENV: process.env.NODE_ENV || "development",
-  DATABASE_URL: process.env.DATABASE_URL!,
-  JWT_SECRET: process.env.JWT_SECRET!,
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
-  CORS_ORIGIN: process.env.CORS_ORIGIN || "http://localhost:5173",
-};
+export const ENV = parsedEnv.data;
+

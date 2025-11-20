@@ -25,13 +25,7 @@ app.use(
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
       
-      const allowedOrigins = [
-        ENV.CORS_ORIGIN,
-        'http://localhost:5173',
-        'http://localhost:8080',
-        'http://127.0.0.1:5173',
-        'http://127.0.0.1:8080',
-      ];
+      const allowedOrigins = ENV.CORS_ALLOWED_ORIGINS;
       
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
