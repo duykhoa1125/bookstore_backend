@@ -18,15 +18,9 @@ export class RatingService {
     return rating;
   }
 
-  async findByBook(bookId: string, params: { page?: number; limit?: number }) {
-    const page = params.page || 1;
-    const limit = params.limit || 10;
-    const skip = (page - 1) * limit;
-
+  async findByBook(bookId: string) {
     const ratings = await prisma.rating.findMany({
       where: { bookId },
-      skip,
-      take: limit,
       include: { user: { select: { fullName: true } } },
       orderBy: { createdAt: "desc" },
     });
@@ -64,15 +58,9 @@ export class RatingService {
     return { message: "Rating deleted successfully" };
   }
 
-  async findByUser(userId: string, params: { page?: number; limit?: number }) {
-    const page = params.page || 1;
-    const limit = params.limit || 10;
-    const skip = (page - 1) * limit;
-
+  async findByUser(userId: string) {
     const ratings = await prisma.rating.findMany({
       where: { userId },
-      skip,
-      take: limit,
       include: { book: { select: { title: true, imageUrl: true } } },
       orderBy: { createdAt: "desc" },
     });
@@ -112,14 +100,8 @@ export class RatingService {
   }
 
   // Admin only methods
-  async findAll(params: { page?: number; limit?: number }) {
-    const page = params.page || 1;
-    const limit = params.limit || 10;
-    const skip = (page - 1) * limit;
-
+  async findAll() {
     const ratings = await prisma.rating.findMany({
-      skip,
-      take: limit,
       include: {
         user: { select: { fullName: true, email: true } },
         book: { select: { title: true } },

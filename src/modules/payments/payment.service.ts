@@ -2,7 +2,7 @@ import prisma from "../../config/database";
 import { ProcessPaymentInput } from "./payment.dto";
 
 export class PaymentService {
-  async processPayment(paymentId: string, data: ProcessPaymentInput) {
+  async processPayment(userId: string, paymentId: string, data: ProcessPaymentInput) {
     const payment = await prisma.payment.findUnique({
       where: { id: paymentId },
       include: { order: true },
@@ -10,6 +10,11 @@ export class PaymentService {
 
     if (!payment) {
       throw new Error("Payment not found");
+    }
+
+    // ✅ SECURITY FIX: Verify payment belongs to user
+    if (payment.order.userId !== userId) {
+      throw new Error("Unauthorized: You cannot process this payment");
     }
 
     if (payment.status === "COMPLETED") {

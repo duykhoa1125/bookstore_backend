@@ -21,11 +21,7 @@ export class RatingController {
 
   findByBook = async (req: Request, res: Response) => {
     try {
-      const { page, limit } = req.query;
-      const ratings = await this.ratingService.findByBook(req.params.bookId, {
-        page: page ? parseInt(page as string) : undefined,
-        limit: limit ? parseInt(limit as string) : undefined,
-      });
+      const ratings = await this.ratingService.findByBook(req.params.bookId);
       return ResponseUtil.success(res, ratings, "Ratings fetched successfully");
     } catch (error: any) {
       return ResponseUtil.error(res, error.message);
@@ -34,11 +30,7 @@ export class RatingController {
 
   findMyRatings = async (req: Request, res: Response) => {
     try {
-      const { page, limit } = req.query;
-      const ratings = await this.ratingService.findByUser(req.user!.id, {
-        page: page ? parseInt(page as string) : undefined,
-        limit: limit ? parseInt(limit as string) : undefined,
-      });
+      const ratings = await this.ratingService.findByUser(req.user!.id);
       return ResponseUtil.success(
         res,
         ratings,
@@ -85,11 +77,7 @@ export class RatingController {
   // Admin only methods
   findAll = async (req: Request, res: Response) => {
     try {
-      const { page, limit } = req.query;
-      const ratings = await this.ratingService.findAll({
-        page: page ? parseInt(page as string) : undefined,
-        limit: limit ? parseInt(limit as string) : undefined,
-      });
+      const ratings = await this.ratingService.findAll();
       return ResponseUtil.success(
         res,
         ratings,

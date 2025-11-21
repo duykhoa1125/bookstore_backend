@@ -43,13 +43,24 @@ Base URL: `http://localhost:3000`
 **Request Body:**
 ```json
 {
+  "username": "johndoe",
   "email": "user@example.com",
   "password": "password123",
-  "name": "John Doe",
+  "fullName": "John Doe",
   "phone": "1234567890",
-  "address": "123 Main St"
+  "address": "123 Main St",
+  "position": "Customer"
 }
 ```
+
+**Field Requirements:**
+- `username` (required): 3-50 characters
+- `email` (required): Valid email format
+- `password` (required): Minimum 6 characters
+- `fullName` (required): 2-100 characters
+- `phone` (optional): Phone number
+- `address` (optional): Address string
+- `position` (optional): Position/title
 
 **Response:**
 ```json
@@ -59,8 +70,12 @@ Base URL: `http://localhost:3000`
   "data": {
     "user": {
       "id": "user-id",
+      "username": "johndoe",
       "email": "user@example.com",
-      "name": "John Doe",
+      "fullName": "John Doe",
+      "phone": "1234567890",
+      "address": "123 Main St",
+      "position": "Customer",
       "role": "USER"
     },
     "token": "jwt-token"
@@ -87,8 +102,12 @@ Base URL: `http://localhost:3000`
   "data": {
     "user": {
       "id": "user-id",
+      "username": "johndoe",
       "email": "user@example.com",
-      "name": "John Doe",
+      "fullName": "John Doe",
+      "phone": "1234567890",
+      "address": "123 Main St",
+      "position": "Customer",
       "role": "USER"
     },
     "token": "jwt-token"
@@ -110,11 +129,14 @@ Authorization: Bearer {token}
   "success": true,
   "data": {
     "id": "user-id",
+    "username": "johndoe",
     "email": "user@example.com",
-    "name": "John Doe",
+    "fullName": "John Doe",
     "phone": "1234567890",
     "address": "123 Main St",
-    "role": "USER"
+    "position": "Customer",
+    "role": "USER",
+    "createdAt": "2025-11-20T..."
   }
 }
 ```
@@ -130,11 +152,17 @@ Authorization: Bearer {token}
 **Request Body:**
 ```json
 {
-  "name": "John Updated",
+  "fullName": "John Updated",
   "phone": "0987654321",
-  "address": "456 New St"
+  "address": "456 New St",
+  "position": "VIP Customer"
 }
 ```
+
+**Notes:**
+- All fields are optional
+- Only ADMIN users can update their own `position` field
+- Regular users cannot modify `position`
 
 ---
 
@@ -144,8 +172,6 @@ Authorization: Bearer {token}
 **GET** `/api/books`
 
 **Query Parameters:**
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Items per page (default: 10)
 - `search` (optional): Search by title
 - `categoryId` (optional): Filter by category
 - `authorId` (optional): Filter by author
@@ -155,38 +181,30 @@ Authorization: Bearer {token}
 ```json
 {
   "success": true,
-  "data": {
-    "books": [
-      {
-        "id": "book-id",
-        "title": "Book Title",
-        "price": 29.99,
-        "stock": 50,
-        "description": "Book description",
-        "imageUrl": "https://...",
-        "category": {
-          "id": "cat-id",
-          "name": "Category Name"
-        },
-        "publisher": {
-          "id": "pub-id",
-          "name": "Publisher Name"
-        },
-        "authors": [
-          {
-            "id": "author-id",
-            "name": "Author Name"
-          }
-        ]
-      }
-    ],
-    "pagination": {
-      "total": 100,
-      "page": 1,
-      "limit": 10,
-      "totalPages": 10
+  "data": [
+    {
+      "id": "book-id",
+      "title": "Book Title",
+      "price": 29.99,
+      "stock": 50,
+      "description": "Book description",
+      "imageUrl": "https://...",
+      "category": {
+        "id": "cat-id",
+        "name": "Category Name"
+      },
+      "publisher": {
+        "id": "pub-id",
+        "name": "Publisher Name"
+      },
+      "authors": [
+        {
+          "id": "author-id",
+          "name": "Author Name"
+        }
+      ]
     }
-  }
+  ]
 }
 ```
 
@@ -820,32 +838,54 @@ Authorization: Bearer {admin-token}
 ### Process Payment
 **POST** `/api/payments/:id/process`
 
+**Description:** Process a payment for an order. The payment ID is provided in the URL.
+
 **Headers:**
 ```
 Authorization: Bearer {token}
 ```
 
+**URL Parameters:**
+- `:id` - The payment ID to process
+
 **Request Body:**
 ```json
 {
-  "orderId": "order-id"
+  "status": "COMPLETED"
 }
 ```
+
+**Valid Status Values:**
+- `COMPLETED` - Payment successful
+- `FAILED` - Payment failed
+
+**Security:**
+- ✅ User can only process their own payments
+- ✅ Automatically verifies payment ownership
+- ❌ Returns 401 if attempting to process another user's payment
 
 **Response:**
 ```json
 {
   "success": true,
-  "message": "Payment processed successfully",
+  "message": "Payment completed successfully",
   "data": {
     "id": "payment-id",
     "orderId": "order-id",
-    "amount": 59.98,
-    "status": "SUCCESS",
-    "createdAt": "2025-11-20T..."
+    "paymentMethodId": "payment-method-id",
+    "total": 59.98,
+    "status": "COMPLETED",
+    "paymentDate": "2025-11-20T...",
+    "createdAt": "2025-11-20T...",
+    "updatedAt": "2025-11-20T..."
   }
 }
 ```
+
+**Notes:**
+- Payment status will be updated to the provided status
+- If status is "COMPLETED", the associated order status will be automatically updated to "PROCESSING"
+- Cannot process a payment that is already completed
 
 ---
 
@@ -881,6 +921,13 @@ All endpoints may return error responses in the following format:
 API requests are rate-limited to prevent abuse:
 - **Development**: 1000 requests per 15 minutes per IP
 - **Production**: 100 requests per 15 minutes per IP
+
+---
+
+## Notes on API Design
+
+- **No Pagination**: This API does not implement pagination. All list endpoints return complete results.
+- If you need pagination in the future, consider adding `page` and `limit` query parameters with `skip` and `take` in Prisma queries.
 
 ---
 

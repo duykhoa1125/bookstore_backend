@@ -4,13 +4,6 @@ export interface ApiResponseMeta {
   [key: string]: unknown;
 }
 
-export interface PaginationMeta {
-  currentPage: number;
-  pageSize: number;
-  totalItems: number;
-  totalPages: number;
-}
-
 export type ApiErrorPayload =
   | Record<string, string[]>
   | string[]
@@ -23,20 +16,4 @@ export interface ApiResponse<T = unknown> {
   data: T | null;
   errors: ApiErrorPayload;
   meta: ApiResponseMeta;
-  pagination?: PaginationMeta;
-}
-
-export interface PaginationParams {
-  page: number;
-  limit: number;
-}
-
-export interface PaginatedResponse<T = unknown> {
-  items: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
 }

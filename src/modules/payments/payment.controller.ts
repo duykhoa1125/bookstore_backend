@@ -8,6 +8,7 @@ export class PaymentController {
   processPayment = async (req: Request, res: Response) => {
     try {
       const result = await this.paymentService.processPayment(
+        req.user!.id,
         req.params.id,
         req.body
       );
